@@ -6,7 +6,7 @@ export interface UseAdminAuthResult {
   isAuthenticated: boolean;
   token: string | null;
   user: AdminUser | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
   error: string | null;
@@ -29,11 +29,11 @@ export function useAdminAuth(): UseAdminAuthResult {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
-      const result = await adminLogin({ username, password });
+      const result = await adminLogin({ email, password });
       if (result?.token) {
         memoryToken = result.token;
         memoryUser = result.user || null;
@@ -45,7 +45,7 @@ export function useAdminAuth(): UseAdminAuthResult {
       setError('Authentication failed. Please check your credentials.');
       return false;
     } catch {
-      setError('Login failed. Please verify your username and password.');
+      setError('Login failed. Please verify your email and password.');
       return false;
     } finally {
       setLoading(false);

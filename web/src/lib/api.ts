@@ -13,7 +13,7 @@ function getHeaders(authToken?: string): Record<string, string> {
     'apikey': SUPABASE_ANON_KEY,
   };
   if (authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`;
+    headers['x-admin-token'] = authToken;
   }
   return headers;
 }
@@ -55,13 +55,12 @@ export async function createOrder(params: {
   packageId: string;
   phoneNumber: string;
 }): Promise<{ order_number: string; order: Order }> {
-  return callFunction('create-order', { body: params });
+  return callFunction('orders-create', { body: params });
 }
 
-export async function getOrderStatus(orderNumber: string): Promise<{ order: Order }> {
-  return callFunction('get-order-status', {
-    method: 'POST',
-    body: { order_number: orderNumber },
+export async function getOrderStatus(orderNumber: string, phone?: string): Promise<{ order: Order }> {
+  return callFunction('orders-get', {
+    body: { order_number: orderNumber, customer_phone: phone },
   });
 }
 
@@ -71,36 +70,34 @@ export async function notifyPayment(params: {
   amount: number;
   phone_number: string;
 }): Promise<{ success: boolean; message: string }> {
-  return callFunction('notify-payment', { body: params });
+  return callFunction('payment-notify', { body: params });
+}
+
+export async function fetchPackages(): Promise<{ packages: Package[] }> {
+  return callFunction('packages-list', { method: 'GET' });
 }
 
 // ===== Admin API =====
 
 export async function adminLogin(params: {
-  username: string;
+  email: string;
   password: string;
 }): Promise<{ token: string; user: AdminUser }> {
-  return callFunction('admin-login', { body: params });
+  return callFunction('admin-auth', { body: { action: 'login', ...params } });
 }
 
-export async function adminGetOrders(authToken: string): Promise<{ orders: Order[] }> {
-  return callFunction('admin-get-orders', {
-    method: 'GET',
-    authToken,
-  });
+export async function adminGetOrders(authToken: string): Promise<{ orders: Order[]; total?: number }> {
+  return callFunction('admin-orders', { method: 'GET', authToken });
 }
 
 export async function adminUpdateOrder(
   authToken: string,
   params: {
     order_id: string;
-    status?: string;
-    payment_status?: string;
-    fulfillment_status?: string;
-    notes?: string;
+    action: string;
   }
 ): Promise<{ order: Order }> {
-  return callFunction('admin-update-order', {
+  return callFunction('admin-orders', {
     method: 'PATCH',
     body: params,
     authToken,
@@ -108,17 +105,14 @@ export async function adminUpdateOrder(
 }
 
 export async function adminGetPackages(authToken: string): Promise<{ packages: Package[] }> {
-  return callFunction('admin-get-packages', {
-    method: 'GET',
-    authToken,
-  });
+  return callFunction('admin-packages', { method: 'GET', authToken });
 }
 
 export async function adminCreatePackage(
   authToken: string,
-  pkg: Omit<Package, 'id'>
+  pkg: Partial<Package>
 ): Promise<{ package: Package }> {
-  return callFunction('admin-create-package', {
+  return callFunction('admin-packages', {
     body: pkg as unknown as Record<string, unknown>,
     authToken,
   });
@@ -128,7 +122,7 @@ export async function adminUpdatePackage(
   authToken: string,
   params: { id: string; updates: Partial<Package> }
 ): Promise<{ package: Package }> {
-  return callFunction('admin-update-package', {
+  return callFunction('admin-packages', {
     method: 'PATCH',
     body: params as unknown as Record<string, unknown>,
     authToken,
@@ -139,7 +133,7 @@ export async function adminDeletePackage(
   authToken: string,
   params: { id: string }
 ): Promise<{ success: boolean }> {
-  return callFunction('admin-delete-package', {
+  return callFunction('admin-packages', {
     method: 'DELETE',
     body: params,
     authToken,
@@ -147,8 +141,5 @@ export async function adminDeletePackage(
 }
 
 export async function adminGetAuditLogs(authToken: string): Promise<{ logs: AuditLog[] }> {
-  return callFunction('admin-get-audit-logs', {
-    method: 'GET',
-    authToken,
-  });
+  return callFunction('admin-audit', { method: 'GET', authToken });
 }
