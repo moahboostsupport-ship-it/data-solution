@@ -1,4 +1,4 @@
-import type { Order, Package, AdminUser, AuditLog } from './types';
+import type { Order, AdminOrder, Package, AuditLog } from './types';
 
 // ===== API client for Supabase Edge Functions =====
 
@@ -24,11 +24,18 @@ async function callFunction<T>(
     method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
     body?: Record<string, unknown>;
     authToken?: string;
+    queryParams?: Record<string, string>;
   } = {}
 ): Promise<T> {
-  const { method = 'POST', body, authToken } = options;
+  const { method = 'POST', body, authToken, queryParams } = options;
 
-  const response = await fetch(`${FUNCTION_BASE}/${name}`, {
+  let url = `${FUNCTION_BASE}/${name}`;
+  if (queryParams) {
+    const params = new URLSearchParams(queryParams).toString();
+    url += `?${params}`;
+  }
+
+  const response = await fetch(url, {
     method,
     headers: getHeaders(authToken),
     body: body ? JSON.stringify(body) : undefined,
@@ -54,13 +61,22 @@ async function callFunction<T>(
 export async function createOrder(params: {
   packageId: string;
   phoneNumber: string;
-}): Promise<{ order_number: string; order: Order }> {
-  return callFunction('orders-create', { body: params });
+}): Promise<{ order_number: string; package_name: string; amount: number; phone: string; payment_status: string }> {
+  return callFunction('orders-create', {
+    body: {
+      package_id: params.packageId,
+      customer_phone: params.phoneNumber,
+    },
+  });
 }
 
-export async function getOrderStatus(orderNumber: string, phone?: string): Promise<{ order: Order }> {
+export async function getOrderStatus(orderNumber: string, phone: string): Promise<{ order: Order }> {
   return callFunction('orders-get', {
-    body: { order_number: orderNumber, customer_phone: phone },
+    method: 'GET',
+    queryParams: {
+      order_number: orderNumber,
+      customer_phone: phone,
+    },
   });
 }
 
@@ -82,11 +98,11 @@ export async function fetchPackages(): Promise<{ packages: Package[] }> {
 export async function adminLogin(params: {
   email: string;
   password: string;
-}): Promise<{ token: string; user: AdminUser }> {
+}): Promise<{ token: string; email: string }> {
   return callFunction('admin-auth', { body: { action: 'login', ...params } });
 }
 
-export async function adminGetOrders(authToken: string): Promise<{ orders: Order[]; total?: number }> {
+export async function adminGetOrders(authToken: string): Promise<{ orders: AdminOrder[]; pagination?: { total: number; page: number; limit: number; total_pages: number } }> {
   return callFunction('admin-orders', { method: 'GET', authToken });
 }
 
@@ -96,7 +112,7 @@ export async function adminUpdateOrder(
     order_id: string;
     action: string;
   }
-): Promise<{ order: Order }> {
+): Promise<{ order_id: string; order_number: string; payment_status: string; fulfillment_status: string }> {
   return callFunction('admin-orders', {
     method: 'PATCH',
     body: params,

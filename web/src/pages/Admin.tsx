@@ -9,7 +9,7 @@ import {
   adminGetAuditLogs,
 } from '../lib/api';
 import { formatTime } from '../lib/format';
-import type { Order, Package, AuditLog } from '../lib/types';
+import type { AdminOrder, Package, AuditLog } from '../lib/types';
 import AdminLogin from '../components/AdminLogin';
 import AdminOrdersTable from '../components/AdminOrdersTable';
 import AdminPackagesTable from '../components/AdminPackagesTable';
@@ -115,7 +115,7 @@ function AdminDashboard({ token, onLogout }: AdminDashboardProps) {
 // ===== Orders Tab =====
 
 function OrdersTab({ token }: { token: string }) {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -304,7 +304,7 @@ function AuditLogsTab({ token }: { token: string }) {
           log.action.toLowerCase().includes(q) ||
           log.entity_type.toLowerCase().includes(q) ||
           log.entity_id.toLowerCase().includes(q) ||
-          log.admin_id.toLowerCase().includes(q)
+          log.actor.toLowerCase().includes(q)
       );
     }
 
@@ -397,7 +397,7 @@ function AuditLogsTab({ token }: { token: string }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap font-mono text-xs">
-                      {log.admin_id}
+                      {log.actor}
                     </td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{log.entity_type}</td>
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap font-mono text-xs">{log.entity_id}</td>

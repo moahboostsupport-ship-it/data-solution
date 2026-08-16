@@ -1,17 +1,17 @@
 import { useState, useMemo } from 'react';
-import type { Order } from '../lib/types';
+import type { AdminOrder } from '../lib/types';
 import { formatCurrency, formatTime } from '../lib/format';
 import StatusBadge from './StatusBadge';
 import SearchBar from './SearchBar';
 
 interface AdminOrdersTableProps {
-  orders: Order[];
+  orders: AdminOrder[];
   loading: boolean;
   onSearch?: (query: string) => void;
   onFilter?: (status: string) => void;
 }
 
-type SortField = 'order_number' | 'phone_number' | 'amount' | 'created_at';
+type SortField = 'order_number' | 'customer_phone' | 'amount' | 'created_at';
 type SortDir = 'asc' | 'desc';
 
 const STATUS_FILTERS = [
@@ -27,10 +27,6 @@ const STATUS_FILTERS = [
 
 const PAGE_SIZE = 10;
 
-/**
- * Orders table for the admin dashboard.
- * Supports search, status filter, sorting, and pagination.
- */
 export default function AdminOrdersTable({
   orders,
   loading,
@@ -43,7 +39,6 @@ export default function AdminOrdersTable({
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(0);
 
-  // Filter orders
   const filtered = useMemo(() => {
     let result = [...orders];
 
@@ -52,16 +47,15 @@ export default function AdminOrdersTable({
       result = result.filter(
         (o) =>
           o.order_number.toLowerCase().includes(q) ||
-          o.phone_number.toLowerCase().includes(q) ||
-          (o.mpesa_transaction_id || '').toLowerCase().includes(q)
+          o.customer_phone.toLowerCase().includes(q) ||
+          (o.provider_reference || '').toLowerCase().includes(q)
       );
     }
 
     if (statusFilter) {
-      result = result.filter((o) => o.status === statusFilter);
+      result = result.filter((o) => o.payment_status === statusFilter);
     }
 
-    // Sort
     result.sort((a, b) => {
       let valA: string | number;
       let valB: string | number;
@@ -123,13 +117,12 @@ export default function AdminOrdersTable({
 
   return (
     <div className="space-y-4">
-      {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <SearchBar
             value={searchQuery}
             onChange={handleSearchChange}
-            placeholder="Search by order ID, phone, or receipt..."
+            placeholder="Search by order #, phone, or reference..."
           />
         </div>
         <select
@@ -145,25 +138,23 @@ export default function AdminOrdersTable({
         </select>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-left border-b border-gray-200">
                 <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap cursor-pointer hover:bg-gray-100" onClick={() => handleSort('order_number')}>
-                  Order ID <SortIcon field="order_number" />
+                  Order # <SortIcon field="order_number" />
                 </th>
-                <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap cursor-pointer hover:bg-gray-100" onClick={() => handleSort('phone_number')}>
-                  Phone <SortIcon field="phone_number" />
+                <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap cursor-pointer hover:bg-gray-100" onClick={() => handleSort('customer_phone')}>
+                  Phone <SortIcon field="customer_phone" />
                 </th>
                 <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Package</th>
                 <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap cursor-pointer hover:bg-gray-100" onClick={() => handleSort('amount')}>
                   Amount <SortIcon field="amount" />
                 </th>
-                <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Payment Status</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Payment</th>
                 <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Fulfillment</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Receipt</th>
                 <th className="px-4 py-3 font-semibold text-gray-600 whitespace-nowrap cursor-pointer hover:bg-gray-100" onClick={() => handleSort('created_at')}>
                   Date <SortIcon field="created_at" />
                 </th>
@@ -173,7 +164,7 @@ export default function AdminOrdersTable({
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
                     <div className="flex items-center justify-center gap-2">
                       <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
@@ -184,7 +175,7 @@ export default function AdminOrdersTable({
                 </tr>
               ) : pageOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
                     No orders found.
                   </td>
                 </tr>
@@ -194,7 +185,7 @@ export default function AdminOrdersTable({
                     <td className="px-4 py-3 font-mono text-xs text-gray-700 whitespace-nowrap">
                       {order.order_number}
                     </td>
-                    <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{order.phone_number}</td>
+                    <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{order.customer_phone}</td>
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{order.package_name}</td>
                     <td className="px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">
                       {formatCurrency(order.amount)}
@@ -206,13 +197,10 @@ export default function AdminOrdersTable({
                       <StatusBadge status={order.fulfillment_status} type="fulfillment" />
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
-                      {order.mpesa_transaction_id || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
                       {formatTime(order.created_at)}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                      {order.mpesa_transaction_id || '—'}
+                      {order.provider_reference || '—'}
                     </td>
                   </tr>
                 ))
@@ -222,7 +210,6 @@ export default function AdminOrdersTable({
         </div>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getOrderStatus } from '../lib/api';
-import type { Order, OrderStatus } from '../lib/types';
+import type { Order } from '../lib/types';
 
 export interface UseOrdersResult {
   order: Order | null;
@@ -10,27 +10,27 @@ export interface UseOrdersResult {
 }
 
 /** Statuses that require active polling for updates */
-const POLLABLE_STATUSES: OrderStatus[] = ['payment_verification', 'processing'];
+const POLLABLE_STATUSES: string[] = ['payment_verification', 'processing'];
 
 /**
- * Fetches a single order by order_number. Automatically polls every 5 seconds
- * when the order status is 'payment_verification' or 'processing'.
+ * Fetches a single order by order_number + phone. Automatically polls
+ * every 5 seconds when the order status is 'payment_verification' or 'processing'.
  */
-export function useOrders(orderNumber: string | null): UseOrdersResult {
+export function useOrders(orderNumber: string | null, phone?: string): UseOrdersResult {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchOrder = useCallback(async () => {
-    if (!orderNumber) {
+    if (!orderNumber || !phone) {
       setLoading(false);
-      setError('No order number provided');
+      setError(!orderNumber ? 'No order number provided' : 'Phone number required to verify order');
       return;
     }
 
     try {
-      const result = await getOrderStatus(orderNumber);
+      const result = await getOrderStatus(orderNumber, phone);
       if (!result?.order) {
         setError('Order not found. Please check your order number and try again.');
         setLoading(false);
@@ -43,7 +43,7 @@ export function useOrders(orderNumber: string | null): UseOrdersResult {
     } finally {
       setLoading(false);
     }
-  }, [orderNumber]);
+  }, [orderNumber, phone]);
 
   useEffect(() => {
     setLoading(true);
@@ -61,7 +61,7 @@ export function useOrders(orderNumber: string | null): UseOrdersResult {
 
     if (!order) return;
 
-    const shouldPoll = POLLABLE_STATUSES.includes(order.status as OrderStatus);
+    const shouldPoll = POLLABLE_STATUSES.includes(order.payment_status);
 
     if (shouldPoll) {
       timerRef.current = setTimeout(() => {

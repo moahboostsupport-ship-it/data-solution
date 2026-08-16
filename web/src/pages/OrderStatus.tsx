@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useOrders } from '../hooks/useOrders';
 import type { OrderStatus as OrderStatusType } from '../lib/types';
 import { formatCurrency, formatTime } from '../lib/format';
@@ -11,15 +11,14 @@ const SUPPORT_TEL = '+254798507804';
 
 /**
  * Order status page — shows order details, progress indicator,
- * and auto-polls for updates. Shows M-PESA instructions if still
- * awaiting payment, success message when completed, and helpful
- * error message if failed.
+ * and auto-polls for updates. Gets phone from URL query param for verification.
  */
 export default function OrderStatus() {
   const { orderNumber } = useParams<{ orderNumber: string }>();
-  const { order, loading, error } = useOrders(orderNumber || null);
+  const [searchParams] = useSearchParams();
+  const phone = searchParams.get('phone') || '';
+  const { order, loading, error } = useOrders(orderNumber || null, phone || undefined);
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -33,7 +32,6 @@ export default function OrderStatus() {
     );
   }
 
-  // Error state
   if (error && !order) {
     return (
       <div className="text-center py-12 max-w-md mx-auto">
@@ -42,14 +40,9 @@ export default function OrderStatus() {
         <p className="text-sm text-gray-500 mb-6">{error}</p>
         <div className="flex flex-col gap-3">
           <Link
-            to="/orders"
-            className="bg-brand-600 text-white font-bold text-base px-8 py-3.5 rounded-2xl no-underline active:bg-brand-700 transition-colors no-select"
-          >
-            Look Up Another Order
-          </Link>
-          <Link
             to="/deals"
-            className="text-brand-600 font-semibold text-sm underline"
+            className="text-white font-bold text-base px-8 py-3.5 rounded-2xl no-underline no-select"
+            style={{ background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)' }}
           >
             Browse Deals
           </Link>
@@ -60,7 +53,7 @@ export default function OrderStatus() {
 
   if (!order) return null;
 
-  const status = order.status as OrderStatusType;
+  const status = order.payment_status as OrderStatusType;
   const isAwaitingPayment = status === 'awaiting_payment';
   const isCompleted = status === 'completed';
   const isFailed = status === 'failed';
@@ -69,7 +62,6 @@ export default function OrderStatus() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Page header */}
       <div className="text-center pt-2">
         <h1 className="text-2xl font-bold text-gray-900">Order Status</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -77,18 +69,16 @@ export default function OrderStatus() {
         </p>
       </div>
 
-      {/* Success banner */}
       {isCompleted && (
-        <div className="bg-brand-50 border border-brand-200 rounded-2xl p-6 text-center">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center">
           <span className="text-4xl">🎉</span>
-          <h2 className="text-xl font-bold text-brand-800 mt-2">Order Complete!</h2>
-          <p className="text-sm text-brand-700 mt-1">
+          <h2 className="text-xl font-bold text-green-800 mt-2">Order Complete!</h2>
+          <p className="text-sm text-green-700 mt-1">
             Your package has been successfully processed. Enjoy your data!
           </p>
         </div>
       )}
 
-      {/* Failed banner */}
       {isFailed && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
           <span className="text-4xl">⚠️</span>
@@ -99,7 +89,6 @@ export default function OrderStatus() {
         </div>
       )}
 
-      {/* Cancelled banner */}
       {isCancelled && (
         <div className="bg-gray-100 border border-gray-300 rounded-2xl p-6 text-center">
           <span className="text-4xl">🚫</span>
@@ -110,7 +99,6 @@ export default function OrderStatus() {
         </div>
       )}
 
-      {/* Progress indicator */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
         <OrderProgress status={status} />
         {isProcessing && (
@@ -123,12 +111,10 @@ export default function OrderStatus() {
         )}
       </div>
 
-      {/* Order details */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span>📋</span> Order Details
         </h2>
-
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Order Number</span>
@@ -140,7 +126,7 @@ export default function OrderStatus() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Phone Number</span>
-            <span className="text-sm text-gray-700">{order.phone_number}</span>
+            <span className="text-sm text-gray-700">{order.customer_phone}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Amount</span>
@@ -154,19 +140,12 @@ export default function OrderStatus() {
             <span className="text-sm text-gray-500">Status</span>
             <StatusBadge status={status} type="order" />
           </div>
-          {order.mpesa_transaction_id && (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">M-PESA Reference</span>
-              <span className="font-mono text-sm text-gray-700">{order.mpesa_transaction_id}</span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* M-PESA instructions (if awaiting payment) */}
       {isAwaitingPayment && (
         <div className="space-y-4">
-          <div className="bg-amber-notice border border-amber-noticeBorder rounded-2xl px-5 py-3">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3">
             <p className="text-sm font-medium text-yellow-900">
               💳 Your payment is still pending. Please complete your M-PESA payment using the instructions below.
             </p>
@@ -175,18 +154,17 @@ export default function OrderStatus() {
         </div>
       )}
 
-      {/* Actions */}
       <div className="flex flex-col gap-3">
         {!isCompleted && !isCancelled && (
           <Link
             to="/deals"
-            className="bg-brand-600 text-white font-bold text-lg py-3.5 rounded-2xl no-underline active:bg-brand-700 transition-colors no-select text-center"
+            className="text-white font-bold text-lg py-3.5 rounded-2xl no-underline no-select text-center"
+            style={{ background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)' }}
           >
             Browse More Deals
           </Link>
         )}
 
-        {/* Contact support */}
         <div className="text-center pt-2">
           <p className="text-sm text-gray-500 mb-3">Need help with this order?</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

@@ -31,13 +31,11 @@ export default function Checkout() {
       return;
     }
 
-    // Try static data first
     const found = getPackageById(packageId) || PACKAGES.find((p) => p.id === packageId);
     if (found) {
       setPkg(found);
       setLoading(false);
     } else {
-      // Package not found
       setLoading(false);
     }
   }, [packageId, navigate]);
@@ -55,7 +53,6 @@ export default function Checkout() {
   const handleSubmit = async () => {
     if (!pkg) return;
 
-    // Validate phone
     if (!phone.trim()) {
       setPhoneError('Please enter your Safaricom phone number.');
       return;
@@ -71,7 +68,7 @@ export default function Checkout() {
     try {
       const normalizedPhone = formatPhone(phone);
 
-      // Create order with status 'awaiting_payment'
+      // Create order
       const result = await createOrder({
         packageId: pkg.id,
         phoneNumber: normalizedPhone,
@@ -92,8 +89,8 @@ export default function Checkout() {
         // Non-fatal — order is created, backend will still verify
       }
 
-      // Redirect to order status page
-      navigate(`/order/${result.order_number}`);
+      // Redirect to order status page with phone
+      navigate(`/order/${result.order_number}?phone=${encodeURIComponent(normalizedPhone)}`);
     } catch (err) {
       setSubmitError(
         err instanceof Error
@@ -140,7 +137,6 @@ export default function Checkout() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto fade-in">
-      {/* Steps indicator */}
       <div className="pt-2">
         <CheckoutSteps currentStep={2} />
       </div>
@@ -150,7 +146,6 @@ export default function Checkout() {
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span>🛒</span> Your Order
         </h2>
-
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Package</span>
@@ -174,7 +169,6 @@ export default function Checkout() {
         </div>
       </div>
 
-      {/* Phone input */}
       <PhoneInput
         value={phone}
         onChange={handlePhoneChange}
@@ -182,10 +176,8 @@ export default function Checkout() {
         id="checkout-phone"
       />
 
-      {/* M-PESA Instructions */}
       <MpesaInstructions amount={pkg.price} />
 
-      {/* Submit error */}
       {submitError && (
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
           <p className="text-sm font-medium text-red-700 flex items-start gap-2">
@@ -199,7 +191,6 @@ export default function Checkout() {
         </div>
       )}
 
-      {/* Action buttons */}
       <div className="space-y-3">
         <button
           onClick={handleSubmit}
@@ -233,7 +224,6 @@ export default function Checkout() {
         </button>
       </div>
 
-      {/* Help text */}
       <p className="text-xs text-gray-400 text-center">
         After completing your M-PESA payment, tap the button above. We'll verify your payment and process your order.
       </p>

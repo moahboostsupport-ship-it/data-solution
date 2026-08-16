@@ -12,16 +12,9 @@ export interface UseAdminAuthResult {
   error: string | null;
 }
 
-// Module-level variables — token persists in memory only, NOT in localStorage.
-// The token is lost on page refresh, requiring re-authentication.
 let memoryToken: string | null = null;
 let memoryUser: AdminUser | null = null;
 
-/**
- * Admin authentication hook. Stores the auth token in memory only
- * (not localStorage) for security. The token is lost on page refresh,
- * requiring re-authentication.
- */
 export function useAdminAuth(): UseAdminAuthResult {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(memoryToken !== null);
   const [token, setToken] = useState<string | null>(memoryToken);
@@ -35,10 +28,11 @@ export function useAdminAuth(): UseAdminAuthResult {
     try {
       const result = await adminLogin({ email, password });
       if (result?.token) {
+        const adminUser: AdminUser = { email: result.email };
         memoryToken = result.token;
-        memoryUser = result.user || null;
+        memoryUser = adminUser;
         setToken(result.token);
-        setUser(result.user || null);
+        setUser(adminUser);
         setIsAuthenticated(true);
         return true;
       }
