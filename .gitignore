@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Supabase
+supabase/.temp
+
+# Cloudflare / Wrangler
+.wrangler
+
+# Vite
+web/.vite
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
