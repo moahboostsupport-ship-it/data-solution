@@ -212,7 +212,47 @@ export default function Checkout() {
         id="checkout-phone"
       />
 
-      {/* M-PESA auto payment info card */}
+      {/* Pay button — right after phone number */}
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+          <p className="text-sm font-medium text-red-700 flex items-start gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {submitError}
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={handlePay}
+        disabled={submitting || !isPhoneValid}
+        className="w-full text-white font-bold text-lg py-4 rounded-2xl transition-all active:scale-[0.98] no-select disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{
+          minHeight: '56px',
+          background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)',
+          boxShadow: '0 2px 12px rgba(0, 161, 75, 0.3)',
+        }}
+      >
+        {submitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            Sending M-PESA Prompt...
+          </span>
+        ) : (
+          <>Pay KSh {pkg.price} via M-PESA</>
+        )}
+      </button>
+
+      <p className="text-center text-xs text-gray-400 -mt-2">
+        By paying, you agree to receive an M-PESA prompt on your phone.
+      </p>
+
+      {/* M-PESA info card — below the pay button */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div
           className="px-5 py-4 flex items-center gap-3"
@@ -220,14 +260,14 @@ export default function Checkout() {
         >
           <span className="text-2xl">📲</span>
           <div>
-            <h3 className="text-lg font-bold text-white">Automatic M-PESA Payment</h3>
-            <p className="text-sm text-white/80">Enter your number and tap pay — we'll send a prompt to your phone</p>
+            <h3 className="text-lg font-bold text-white">How It Works</h3>
+            <p className="text-sm text-white/80">Simple 3-step M-PESA payment</p>
           </div>
         </div>
         <div className="px-5 py-4">
           <div className="flex items-start gap-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">1</span>
-            <span className="text-base text-gray-700 leading-relaxed pt-0.5">Tap "Pay" below — we'll send an M-PESA prompt to your phone</span>
+            <span className="text-base text-gray-700 leading-relaxed pt-0.5">Tap "Pay" above — we'll send an M-PESA prompt to your phone</span>
           </div>
           <div className="flex items-start gap-3 mt-3">
             <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">2</span>
@@ -246,47 +286,6 @@ export default function Checkout() {
             </p>
           </div>
         </div>
-      </div>
-
-      {submitError && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
-          <p className="text-sm font-medium text-red-700 flex items-start gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            {submitError}
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        <button
-          onClick={handlePay}
-          disabled={submitting || !isPhoneValid}
-          className="w-full text-white font-bold text-lg py-4 rounded-2xl transition-all active:scale-[0.98] no-select disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            minHeight: '56px',
-            background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)',
-            boxShadow: '0 2px 12px rgba(0, 161, 75, 0.3)',
-          }}
-        >
-          {submitting ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
-              Sending M-PESA Prompt...
-            </span>
-          ) : (
-            <>Pay KSh {pkg.price} via M-PESA</>
-          )}
-        </button>
-
-        <p className="text-center text-xs text-gray-400">
-          By paying, you agree to receive an M-PESA prompt on your phone.
-        </p>
       </div>
     </div>
   );
