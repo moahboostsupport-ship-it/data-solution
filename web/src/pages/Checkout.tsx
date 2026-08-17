@@ -168,14 +168,14 @@ export default function Checkout() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto fade-in">
-      <div className="pt-2">
+    <div className="space-y-4 md:space-y-6 max-w-2xl mx-auto fade-in">
+      <div className="pt-1 md:pt-2">
         <CheckoutSteps currentStep={2} />
       </div>
 
       {/* Order summary */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-5 border-t-[3px] border-brand-500">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 md:p-5 border-t-[3px] border-brand-500">
+        <h2 className="text-base md:text-lg font-bold text-gray-900 mb-3 md:mb-4 flex items-center gap-2">
           <span>🛒</span> Your Order
         </h2>
         <div className="space-y-3">
@@ -195,7 +195,7 @@ export default function Checkout() {
             <span className="text-base font-semibold text-gray-700">Amount</span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold text-brand-700">KSh</span>
-              <span className="text-3xl font-extrabold text-brand-600">{pkg.price}</span>
+              <span className="text-2xl md:text-3xl font-extrabold text-brand-600">{pkg.price}</span>
             </div>
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function Checkout() {
       <button
         onClick={handlePay}
         disabled={submitting || !isPhoneValid}
-        className="w-full text-white font-bold text-lg py-4 rounded-2xl transition-all active:scale-[0.98] no-select disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full text-white font-bold text-base md:text-lg py-3.5 md:py-4 rounded-2xl transition-all active:scale-[0.98] no-select disabled:opacity-50 disabled:cursor-not-allowed"
         style={{
           minHeight: '56px',
           background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)',
@@ -250,9 +250,9 @@ export default function Checkout() {
       </p>
 
       {/* M-PESA info card — below the pay button */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div
-          className="px-5 py-4 flex items-center gap-3"
+          className="px-5 py-4 hidden md:flex items-center gap-3"
           style={{ background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)' }}
         >
           <span className="text-2xl">📲</span>

@@ -13,7 +13,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <MobileHeader />
 
       {/* Main content area — cards are directly tappable, no bottom button needed */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 md:px-6 pb-8 pt-2 safe-pb">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-3 md:px-6 pb-6 md:pb-8 pt-1 md:pt-2 safe-pb">
         {children}
       </main>
 

@@ -77,11 +77,11 @@ export default function Deals() {
   }, [groupedByCategory]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="pt-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">All Deals</h1>
-        <p className="text-sm text-gray-500 mt-1">Choose your package and get connected instantly</p>
+      <div className="pt-1 md:pt-2">
+        <h1 className="text-xl md:text-3xl font-bold text-gray-900">All Deals</h1>
+        <p className="text-xs md:text-sm text-gray-500 mt-0.5">Choose your package and get connected instantly</p>
       </div>
 
       {/* Search */}
@@ -111,7 +111,7 @@ export default function Deals() {
 
       {/* Package sections */}
       {!loading && (
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           {visibleSections.map((section) => {
             const sectionPackages = (searchFilteredPackages || packages).filter(
               (p) => p.category === section.key

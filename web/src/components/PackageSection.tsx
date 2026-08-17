@@ -17,14 +17,14 @@ export default function PackageSection({
   onSelectPackage,
 }: PackageSectionProps) {
   return (
-    <section className="mb-6">
+    <section className="mb-4 md:mb-6">
       {/* Section header */}
-      <div className="flex items-center gap-1.5 mb-2">
-        {icon && <span className="text-lg">{icon}</span>}
-        <h2 className="text-base md:text-xl font-bold text-gray-900">{title}</h2>
+      <div className="flex items-center gap-1 mb-1.5 md:mb-2">
+        {icon && <span className="text-base md:text-lg">{icon}</span>}
+        <h2 className="text-sm md:text-xl font-bold text-gray-900">{title}</h2>
       </div>
       {subtitle && (
-        <p className="text-xs md:text-sm text-gray-500 mb-3 ml-7">{subtitle}</p>
+        <p className="text-[11px] md:text-sm text-gray-500 mb-2 md:mb-3 ml-6">{subtitle}</p>
       )}
 
       {/* Package grid — 2 cols mobile, more on larger */}

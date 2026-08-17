@@ -158,3 +158,66 @@ button:focus-visible, a:focus-visible {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ===== Mobile performance optimizations for low-end Android ===== */
+@media (max-width: 640px) {
+  /* Reduce animation overhead */
+  .fade-in {
+    animation: none;
+  }
+  .pulse-green {
+    animation: none;
+  }
+  
+  /* Improve text rendering on small screens */
+  body {
+    text-rendering: optimizeSpeed;
+  }
+  
+  /* Prevent horizontal scroll */
+  html, body {
+    overflow-x: hidden;
+  }
+  
+  /* Smaller, tighter scrollbar */
+  ::-webkit-scrollbar {
+    width: 2px;
+  }
+  
+  /* Reduce touch delay */
+  button, a, input {
+    touch-action: manipulation;
+  }
+}
+
+/* ===== Larger touch targets on mobile ===== */
+@media (max-width: 640px) {
+  button:not(:disabled),
+  a:not(:disabled) {
+    min-height: 44px;
+  }
+}
+
+/* ===== Prevent zoom on input focus (iOS/Android) ===== */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* ===== Optimized image loading ===== */
+img {
+  loading: lazy;
+}
+
+/* ===== Smooth scroll for anchor links ===== */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

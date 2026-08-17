@@ -39,8 +39,8 @@ export default function PackageCard({
   return (
     <button
       onClick={onClick}
-      className="relative w-full text-left bg-white rounded-xl p-3 card-shadow hover:card-shadow-hover active:scale-[0.97] transition-all no-select overflow-hidden border-t-[3px] border-brand-500"
-      style={{ minHeight: '120px' }}
+      className="relative w-full text-left bg-white rounded-xl p-2.5 card-shadow hover:card-shadow-hover active:scale-[0.97] transition-all no-select overflow-hidden border-t-[3px] border-brand-500"
+      style={{ minHeight: '108px' }}
     >
       {/* Badge ribbon */}
       {badge && (
@@ -50,26 +50,26 @@ export default function PackageCard({
       )}
 
       {/* Emoji + name in one row */}
-      <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-xl">{emoji}</span>
-        <h3 className="text-sm font-semibold text-gray-800 leading-tight">{name}</h3>
+      <div className="flex items-center gap-1 mb-0.5">
+        <span className="text-lg">{emoji}</span>
+        <h3 className="text-xs font-semibold text-gray-800 leading-tight">{name}</h3>
       </div>
 
       {/* Validity */}
-      <p className="text-[11px] text-gray-400 mb-2">{validity}</p>
+      <p className="text-[10px] text-gray-400 mb-1.5">{validity}</p>
 
       {/* PRICE */}
       <div className="flex items-baseline gap-0.5">
-        <span className="text-sm font-bold text-brand-700">KSh</span>
-        <span className="text-2xl font-extrabold text-brand-600 leading-none">
+        <span className="text-xs font-bold text-brand-700">KSh</span>
+        <span className="text-xl font-extrabold text-brand-600 leading-none">
           {price.toLocaleString('en-KE')}
         </span>
       </div>
 
       {/* Purchase frequency */}
-      <div className="mt-1.5">
+      <div className="mt-1">
         <span
-          className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full ${
+          className={`inline-block text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
             purchaseFrequency === 'buy_once'
               ? 'bg-brand-50 text-brand-700'
               : 'bg-blue-50 text-blue-700'
