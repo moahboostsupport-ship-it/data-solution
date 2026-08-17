@@ -22,11 +22,13 @@ export function useAdminAuth(): UseAdminAuthResult {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
-      const result = await adminLogin({ email, password });
+      // Auto-append domain if user didn't type an email
+      const loginEmail = username.includes('@') ? username : `${username}@datasolution.co.ke`;
+      const result = await adminLogin({ email: loginEmail, password });
       if (result?.token) {
         const adminUser: AdminUser = { email: result.email };
         memoryToken = result.token;
@@ -36,10 +38,10 @@ export function useAdminAuth(): UseAdminAuthResult {
         setIsAuthenticated(true);
         return true;
       }
-      setError('Authentication failed. Please check your credentials.');
+      setError('Authentication failed. Please check your username and password.');
       return false;
     } catch {
-      setError('Login failed. Please verify your email and password.');
+      setError('Login failed. Please verify your username and password.');
       return false;
     } finally {
       setLoading(false);
