@@ -98,7 +98,7 @@ async function callFunction<T>(
 export async function createOrder(params: {
   packageId: string;
   phoneNumber: string;
-}): Promise<{ order_number: string; package_name: string; amount: number; phone: string; payment_status: string }> {
+}): Promise<{ order_number: string; package_name: string; amount: number; phone: string; payment_status: string; stk_push_sent: boolean; stk_error?: string }> {
   return callFunction('orders-create', {
     body: {
       package_id: params.packageId,

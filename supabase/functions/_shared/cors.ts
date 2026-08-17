@@ -8,7 +8,7 @@ const ALLOWED_ORIGINS = [
 ];
 
 const ALLOWED_METHODS = 'GET, POST, PATCH, DELETE, OPTIONS';
-const ALLOWED_HEADERS = 'authorization, content-type, x-admin-token';
+const ALLOWED_HEADERS = 'authorization, content-type, apikey, x-admin-token';
 
 /**
  * Returns CORS headers for responses

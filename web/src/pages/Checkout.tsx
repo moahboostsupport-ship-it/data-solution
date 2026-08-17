@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPackageById, PACKAGES } from '../lib/packages';
-import { createOrder, initiateStkPush } from '../lib/api';
+import { createOrder } from '../lib/api';
 import { formatPhone, validateSafaricomPhone } from '../lib/format';
 import { supabase } from '../lib/supabase';
 import type { Package } from '../lib/types';
@@ -101,7 +101,7 @@ export default function Checkout() {
     try {
       const normalizedPhone = formatPhone(phone);
 
-      // Step 1: Create order
+      // Single API call: creates order + fires STK Push instantly
       const orderResult = await createOrder({
         packageId: pkg.id,
         phoneNumber: normalizedPhone,
@@ -111,20 +111,14 @@ export default function Checkout() {
         throw new Error('Failed to create order. Please try again.');
       }
 
-      // Step 2: Initiate STK Push
-      try {
-        await initiateStkPush({
-          order_number: orderResult.order_number,
-          customer_phone: normalizedPhone,
-        });
-      } catch (stkErr) {
-        // STK Push failed — but order is created. Redirect to order status
-        const msg = stkErr instanceof Error ? stkErr.message : 'Payment request failed.';
-        navigate(`/order/${orderResult.order_number}?phone=${encodeURIComponent(normalizedPhone)}&error=${encodeURIComponent(msg)}`);
+      // STK push was already fired by the backend — redirect immediately
+      if (!orderResult.stk_push_sent && orderResult.stk_error) {
+        // STK push failed — order is created, redirect with error for retry
+        navigate(`/order/${orderResult.order_number}?phone=${encodeURIComponent(normalizedPhone)}&error=${encodeURIComponent(orderResult.stk_error)}`);
         return;
       }
 
-      // Step 3: Redirect to order status page — polling will confirm payment
+      // Redirect to order status page — polling will confirm payment
       navigate(`/order/${orderResult.order_number}?phone=${encodeURIComponent(normalizedPhone)}`);
     } catch (err) {
       let message = 'Something went wrong. Please try again or contact 0798507804.';
