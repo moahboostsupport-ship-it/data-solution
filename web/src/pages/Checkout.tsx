@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPackageById, PACKAGES } from '../lib/packages';
 import { createOrder, initiateStkPush } from '../lib/api';
-import { formatPhone, validateSafaricomPhone, formatCurrency } from '../lib/format';
+import { formatPhone, validateSafaricomPhone } from '../lib/format';
+import { supabase } from '../lib/supabase';
 import type { Package } from '../lib/types';
 import PhoneInput from '../components/PhoneInput';
 import CheckoutSteps from '../components/CheckoutSteps';
@@ -23,20 +24,53 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Load package details
+  // Load package details — try static data first, then Supabase
   useEffect(() => {
     if (!packageId) {
       navigate('/deals');
       return;
     }
 
-    const found = getPackageById(packageId) || PACKAGES.find((p) => p.id === packageId);
-    if (found) {
-      setPkg(found);
-      setLoading(false);
-    } else {
-      setLoading(false);
+    let mounted = true;
+
+    async function loadPackage() {
+      // 1. Try static packages first (string IDs like "bingwa-250mb")
+      const found = packageId ? (getPackageById(packageId) || PACKAGES.find((p) => p.id === packageId)) : null;
+      if (found) {
+        if (mounted) {
+          setPkg(found);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // 2. Try Supabase (UUID IDs from database)
+      try {
+        const { data, error } = await supabase
+          .from('packages')
+          .select('*')
+          .eq('id', packageId)
+          .single();
+
+        if (error) throw error;
+
+        if (data && mounted) {
+          setPkg(data as unknown as Package);
+          setLoading(false);
+        }
+      } catch {
+        // 3. Package not found anywhere
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
+
+    loadPackage();
+
+    return () => {
+      mounted = false;
+    };
   }, [packageId, navigate]);
 
   const isPhoneValid = useMemo(() => {
@@ -85,9 +119,7 @@ export default function Checkout() {
         });
       } catch (stkErr) {
         // STK Push failed — but order is created. Redirect to order status
-        // so the user can retry or contact support.
         const msg = stkErr instanceof Error ? stkErr.message : 'Payment request failed.';
-        // Redirect to order status page — they can retry STK push from there
         navigate(`/order/${orderResult.order_number}?phone=${encodeURIComponent(normalizedPhone)}&error=${encodeURIComponent(msg)}`);
         return;
       }
@@ -245,26 +277,17 @@ export default function Checkout() {
               <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
-              Sending payment request...
+              Sending M-PESA Prompt...
             </span>
           ) : (
-            <span>Pay {formatCurrency(pkg.price)} via M-PESA</span>
+            <>Pay KSh {pkg.price} via M-PESA</>
           )}
         </button>
 
-        <button
-          onClick={() => navigate('/deals')}
-          disabled={submitting}
-          className="w-full bg-gray-100 text-gray-700 font-semibold text-base py-3.5 rounded-2xl active:bg-gray-200 transition-colors no-select disabled:opacity-50"
-          style={{ minHeight: '52px' }}
-        >
-          Cancel
-        </button>
+        <p className="text-center text-xs text-gray-400">
+          By paying, you agree to receive an M-PESA prompt on your phone.
+        </p>
       </div>
-
-      <p className="text-xs text-gray-400 text-center">
-        You'll receive an M-PESA prompt on your phone. Enter your PIN to complete payment.
-      </p>
     </div>
   );
 }
