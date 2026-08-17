@@ -5,7 +5,7 @@ interface CheckoutStepsProps {
 const STEPS = [
   { number: 1, label: 'Select Package' },
   { number: 2, label: 'Enter Phone' },
-  { number: 3, label: 'Pay via M-PESA' },
+  { number: 3, label: 'M-PESA Prompt' },
   { number: 4, label: 'Confirmation' },
 ];
 

@@ -4,7 +4,6 @@ import type { OrderStatus as OrderStatusType } from '../lib/types';
 import { formatCurrency, formatTime } from '../lib/format';
 import OrderProgress from '../components/OrderProgress';
 import StatusBadge from '../components/StatusBadge';
-import MpesaInstructions from '../components/MpesaInstructions';
 
 const SUPPORT_PHONE = '0798507804';
 const SUPPORT_TEL = '+254798507804';
@@ -106,7 +105,7 @@ export default function OrderStatus() {
             <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             </svg>
-            <span className="font-medium">Auto-refreshing every 5 seconds...</span>
+            <span className="font-medium">Waiting for M-PESA confirmation...</span>
           </div>
         )}
       </div>
@@ -144,13 +143,17 @@ export default function OrderStatus() {
       </div>
 
       {isAwaitingPayment && (
-        <div className="space-y-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3">
-            <p className="text-sm font-medium text-yellow-900">
-              💳 Your payment is still pending. Please complete your M-PESA payment using the instructions below.
+        <div className="bg-white rounded-2xl border border-green-200 p-6 text-center space-y-3">
+          <span className="text-4xl">📱</span>
+          <h2 className="text-xl font-bold text-gray-900">Check Your Phone</h2>
+          <p className="text-sm text-gray-600">
+            We have sent an M-PESA payment request to <span className="font-semibold text-gray-900">{order.customer_phone}</span>. Enter your M-PESA PIN to complete the payment.
+          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-3">
+            <p className="text-xs text-yellow-900">
+              💡 Didn't receive the prompt? Make sure your phone is unlocked and SIM is active.
             </p>
           </div>
-          <MpesaInstructions amount={order.amount} />
         </div>
       )}
 

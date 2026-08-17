@@ -1,17 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPackageById, PACKAGES } from '../lib/packages';
-import { createOrder, notifyPayment } from '../lib/api';
-import { formatPhone, validateSafaricomPhone } from '../lib/format';
+import { createOrder, initiateStkPush } from '../lib/api';
+import { formatPhone, validateSafaricomPhone, formatCurrency } from '../lib/format';
 import type { Package } from '../lib/types';
 import PhoneInput from '../components/PhoneInput';
 import CheckoutSteps from '../components/CheckoutSteps';
-import MpesaInstructions from '../components/MpesaInstructions';
 
 /**
- * Checkout page — package selection confirmation, phone entry,
- * and M-PESA payment instructions. Creates an order and notifies
- * the backend that the customer is waiting for payment verification.
+ * Checkout page — package summary, phone entry, and automatic M-PESA STK Push.
+ * Creates an order and triggers STK Push via Tuma.co.ke.
+ * Customer gets an M-PESA prompt on their phone — no manual steps.
  */
 export default function Checkout() {
   const { packageId } = useParams<{ packageId: string }>();
@@ -50,7 +49,7 @@ export default function Checkout() {
     setPhoneError(null);
   };
 
-  const handleSubmit = async () => {
+  const handlePay = async () => {
     if (!pkg) return;
 
     if (!phone.trim()) {
@@ -68,29 +67,33 @@ export default function Checkout() {
     try {
       const normalizedPhone = formatPhone(phone);
 
-      // Create order
-      const result = await createOrder({
+      // Step 1: Create order
+      const orderResult = await createOrder({
         packageId: pkg.id,
         phoneNumber: normalizedPhone,
       });
 
-      if (!result?.order_number) {
+      if (!orderResult?.order_number) {
         throw new Error('Failed to create order. Please try again.');
       }
 
-      // Notify backend that customer is waiting for verification
+      // Step 2: Initiate STK Push
       try {
-        await notifyPayment({
-          order_number: result.order_number,
-          amount: pkg.price,
-          phone_number: normalizedPhone,
+        await initiateStkPush({
+          order_number: orderResult.order_number,
+          customer_phone: normalizedPhone,
         });
-      } catch {
-        // Non-fatal — order is created, backend will still verify
+      } catch (stkErr) {
+        // STK Push failed — but order is created. Redirect to order status
+        // so the user can retry or contact support.
+        const msg = stkErr instanceof Error ? stkErr.message : 'Payment request failed.';
+        // Redirect to order status page — they can retry STK push from there
+        navigate(`/order/${orderResult.order_number}?phone=${encodeURIComponent(normalizedPhone)}&error=${encodeURIComponent(msg)}`);
+        return;
       }
 
-      // Redirect to order status page with phone
-      navigate(`/order/${result.order_number}?phone=${encodeURIComponent(normalizedPhone)}`);
+      // Step 3: Redirect to order status page — polling will confirm payment
+      navigate(`/order/${orderResult.order_number}?phone=${encodeURIComponent(normalizedPhone)}`);
     } catch (err) {
       setSubmitError(
         err instanceof Error
@@ -169,6 +172,7 @@ export default function Checkout() {
         </div>
       </div>
 
+      {/* Phone input */}
       <PhoneInput
         value={phone}
         onChange={handlePhoneChange}
@@ -176,7 +180,41 @@ export default function Checkout() {
         id="checkout-phone"
       />
 
-      <MpesaInstructions amount={pkg.price} />
+      {/* M-PESA auto payment info card */}
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div
+          className="px-5 py-4 flex items-center gap-3"
+          style={{ background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)' }}
+        >
+          <span className="text-2xl">📲</span>
+          <div>
+            <h3 className="text-lg font-bold text-white">Automatic M-PESA Payment</h3>
+            <p className="text-sm text-white/80">Enter your number and tap pay — we'll send a prompt to your phone</p>
+          </div>
+        </div>
+        <div className="px-5 py-4">
+          <div className="flex items-start gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">1</span>
+            <span className="text-base text-gray-700 leading-relaxed pt-0.5">Tap "Pay" below — we'll send an M-PESA prompt to your phone</span>
+          </div>
+          <div className="flex items-start gap-3 mt-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">2</span>
+            <span className="text-base text-gray-700 leading-relaxed pt-0.5">Enter your M-PESA PIN on your phone to authorize</span>
+          </div>
+          <div className="flex items-start gap-3 mt-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-sm font-bold">3</span>
+            <span className="text-base text-gray-700 leading-relaxed pt-0.5">Payment confirmed automatically — your package is processed instantly</span>
+          </div>
+        </div>
+        <div className="px-5 py-4 bg-amber-50 border-t border-amber-200">
+          <div className="flex items-start gap-2">
+            <span className="text-xl flex-shrink-0">🔒</span>
+            <p className="text-sm text-yellow-900 font-medium leading-snug">
+              Your payment is processed securely by M-PESA. We never see your PIN.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {submitError && (
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
@@ -193,13 +231,13 @@ export default function Checkout() {
 
       <div className="space-y-3">
         <button
-          onClick={handleSubmit}
+          onClick={handlePay}
           disabled={submitting || !isPhoneValid}
           className="w-full text-white font-bold text-lg py-4 rounded-2xl transition-all active:scale-[0.98] no-select disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ 
+          style={{
             minHeight: '56px',
             background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)',
-            boxShadow: '0 2px 12px rgba(0, 161, 75, 0.3)'
+            boxShadow: '0 2px 12px rgba(0, 161, 75, 0.3)',
           }}
         >
           {submitting ? (
@@ -207,10 +245,10 @@ export default function Checkout() {
               <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
-              Creating your order...
+              Sending payment request...
             </span>
           ) : (
-            '✅ I have completed payment'
+            <span>Pay {formatCurrency(pkg.price)} via M-PESA</span>
           )}
         </button>
 
@@ -225,7 +263,7 @@ export default function Checkout() {
       </div>
 
       <p className="text-xs text-gray-400 text-center">
-        After completing your M-PESA payment, tap the button above. We'll verify your payment and process your order.
+        You'll receive an M-PESA prompt on your phone. Enter your PIN to complete payment.
       </p>
     </div>
   );

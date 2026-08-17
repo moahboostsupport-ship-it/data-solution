@@ -89,6 +89,18 @@ export async function notifyPayment(params: {
   return callFunction('payment-notify', { body: params });
 }
 
+export async function initiateStkPush(params: {
+  order_number: string;
+  customer_phone: string;
+}): Promise<{ success: boolean; message: string; checkout_request_id: string; order_number: string }> {
+  return callFunction('mpesa-stkpush', {
+    body: {
+      order_number: params.order_number,
+      customer_phone: params.customer_phone,
+    },
+  });
+}
+
 export async function fetchPackages(): Promise<{ packages: Package[] }> {
   return callFunction('packages-list', { method: 'GET' });
 }
