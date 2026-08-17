@@ -1,5 +1,7 @@
 import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
+import { initiateStkPush } from '../lib/api';
 import type { OrderStatus as OrderStatusType } from '../lib/types';
 import { formatCurrency, formatTime } from '../lib/format';
 import OrderProgress from '../components/OrderProgress';
@@ -16,7 +18,26 @@ export default function OrderStatus() {
   const { orderNumber } = useParams<{ orderNumber: string }>();
   const [searchParams] = useSearchParams();
   const phone = searchParams.get('phone') || '';
-  const { order, loading, error } = useOrders(orderNumber || null, phone || undefined);
+  const stkError = searchParams.get('error') || '';
+  const { order, loading, error, refetch } = useOrders(orderNumber || null, phone || undefined);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const [retrySuccess, setRetrySuccess] = useState(false);
+
+  const handleRetry = async () => {
+    if (!orderNumber || !phone) return;
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      await initiateStkPush({ order_number: orderNumber, customer_phone: phone });
+      setRetrySuccess(true);
+      refetch();
+    } catch (err) {
+      setRetryError(err instanceof Error ? err.message : 'Payment request failed. Please try again.');
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -142,7 +163,28 @@ export default function OrderStatus() {
         </div>
       </div>
 
-      {isAwaitingPayment && (
+      {isAwaitingPayment && (stkError || retryError) && !retrySuccess && (
+        <div className="bg-red-50 rounded-2xl border border-red-200 p-6 text-center space-y-3">
+          <span className="text-4xl">⚠️</span>
+          <h2 className="text-xl font-bold text-red-800">M-PESA Prompt Not Sent</h2>
+          <p className="text-sm text-red-700">
+            {retryError || stkError || 'We could not send the M-PESA payment request to your phone.'}
+          </p>
+          <p className="text-xs text-red-600">
+            This can happen if your number recently cancelled several prompts. Try again below, or use a different M-PESA number, or contact support.
+          </p>
+          <button
+            onClick={handleRetry}
+            disabled={retrying}
+            className="w-full text-white font-bold text-base py-3 rounded-xl no-select disabled:opacity-60"
+            style={{ background: 'linear-gradient(135deg, #005C2B 0%, #00A14B 100%)' }}
+          >
+            {retrying ? 'Resending...' : 'Resend M-PESA Prompt'}
+          </button>
+        </div>
+      )}
+
+      {isAwaitingPayment && (!stkError || retrySuccess) && (
         <div className="bg-white rounded-2xl border border-green-200 p-6 text-center space-y-3">
           <span className="text-4xl">📱</span>
           <h2 className="text-xl font-bold text-gray-900">Check Your Phone</h2>
