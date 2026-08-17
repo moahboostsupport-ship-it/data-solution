@@ -17,18 +17,18 @@ export default function PackageSection({
   onSelectPackage,
 }: PackageSectionProps) {
   return (
-    <section className="mb-10">
+    <section className="mb-6">
       {/* Section header */}
-      <div className="flex items-center gap-2 mb-1">
-        {icon && <span className="text-2xl">{icon}</span>}
-        <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
+      <div className="flex items-center gap-1.5 mb-2">
+        {icon && <span className="text-lg">{icon}</span>}
+        <h2 className="text-base md:text-xl font-bold text-gray-900">{title}</h2>
       </div>
       {subtitle && (
-        <p className="text-sm md:text-base text-gray-500 mb-4 ml-9">{subtitle}</p>
+        <p className="text-xs md:text-sm text-gray-500 mb-3 ml-7">{subtitle}</p>
       )}
 
-      {/* Package grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+      {/* Package grid — 2 cols mobile, more on larger */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
         {packages.map((pkg) => (
           <PackageCard
             key={pkg.id}

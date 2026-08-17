@@ -39,8 +39,8 @@ export default function PackageCard({
   return (
     <button
       onClick={onClick}
-      className="relative w-full text-left bg-white rounded-2xl p-5 card-shadow hover:card-shadow-hover active:scale-[0.97] transition-all no-select overflow-hidden border-t-[3px] border-brand-500"
-      style={{ minHeight: '160px' }}
+      className="relative w-full text-left bg-white rounded-xl p-3 card-shadow hover:card-shadow-hover active:scale-[0.97] transition-all no-select overflow-hidden border-t-[3px] border-brand-500"
+      style={{ minHeight: '120px' }}
     >
       {/* Badge ribbon */}
       {badge && (
@@ -49,33 +49,33 @@ export default function PackageCard({
         </div>
       )}
 
-      {/* Category emoji */}
-      <div className="text-3xl mb-2">{emoji}</div>
-
-      {/* Package name */}
-      <h3 className="text-lg font-semibold text-gray-800 mb-1">{name}</h3>
+      {/* Emoji + name in one row */}
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="text-xl">{emoji}</span>
+        <h3 className="text-sm font-semibold text-gray-800 leading-tight">{name}</h3>
+      </div>
 
       {/* Validity */}
-      <p className="text-sm text-gray-500 mb-3">{validity}</p>
+      <p className="text-[11px] text-gray-400 mb-2">{validity}</p>
 
-      {/* PRICE — most prominent element */}
-      <div className="flex items-baseline gap-1 mb-2">
-        <span className="text-2xl font-bold text-brand-700">KSh</span>
-        <span className="text-4xl font-extrabold text-brand-600 leading-none">
+      {/* PRICE */}
+      <div className="flex items-baseline gap-0.5">
+        <span className="text-sm font-bold text-brand-700">KSh</span>
+        <span className="text-2xl font-extrabold text-brand-600 leading-none">
           {price.toLocaleString('en-KE')}
         </span>
       </div>
 
-      {/* Purchase frequency label */}
-      <div className="mt-2">
+      {/* Purchase frequency */}
+      <div className="mt-1.5">
         <span
-          className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full ${
+          className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full ${
             purchaseFrequency === 'buy_once'
               ? 'bg-brand-50 text-brand-700'
               : 'bg-blue-50 text-blue-700'
           }`}
         >
-          {purchaseFrequency === 'buy_once' ? '🔑 Buy Once!' : '🔁 Buy Many Times!'}
+          {purchaseFrequency === 'buy_once' ? '🔑 Buy Once' : '🔁 Many Times'}
         </span>
       </div>
     </button>
