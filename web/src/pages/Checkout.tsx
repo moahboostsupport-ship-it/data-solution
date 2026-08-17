@@ -127,11 +127,14 @@ export default function Checkout() {
       // Step 3: Redirect to order status page — polling will confirm payment
       navigate(`/order/${orderResult.order_number}?phone=${encodeURIComponent(normalizedPhone)}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error
-          ? err.message
-          : 'Something went wrong. Please try again or contact 0798507804.'
-      );
+      let message = 'Something went wrong. Please try again or contact 0798507804.';
+      if (err instanceof Error) {
+        // Normalize raw browser network errors into a friendly message
+        message = /failed to fetch|load failed|network/i.test(err.message)
+          ? 'Network error — check your internet connection and tap Pay again.'
+          : err.message;
+      }
+      setSubmitError(message);
       setSubmitting(false);
     }
   };

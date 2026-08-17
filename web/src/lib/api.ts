@@ -18,6 +18,23 @@ function getHeaders(authToken?: string): Record<string, string> {
   return headers;
 }
 
+// Network-level fetch with timeout — avoids hanging forever on flaky mobile connections
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 15000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function isNetworkError(err: unknown): boolean {
+  if (err instanceof TypeError) return true; // "Failed to fetch" / "Load failed"
+  if (err instanceof DOMException && err.name === 'AbortError') return true; // timeout
+  return false;
+}
+
 async function callFunction<T>(
   name: string,
   options: {
@@ -35,11 +52,31 @@ async function callFunction<T>(
     url += `?${params}`;
   }
 
-  const response = await fetch(url, {
+  const requestInit: RequestInit = {
     method,
     headers: getHeaders(authToken),
     body: body ? JSON.stringify(body) : undefined,
-  });
+  };
+
+  // Retry once on transient network failures (poor mobile signal, DNS blip, etc.)
+  // Never retry once we've received an actual server response.
+  let response: Response;
+  try {
+    response = await fetchWithTimeout(url, requestInit);
+  } catch (err) {
+    if (isNetworkError(err)) {
+      try {
+        response = await fetchWithTimeout(url, requestInit);
+      } catch (retryErr) {
+        if (isNetworkError(retryErr)) {
+          throw new Error('Network error — please check your internet connection and try again.');
+        }
+        throw retryErr;
+      }
+    } else {
+      throw err;
+    }
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
